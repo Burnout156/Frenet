@@ -1,0 +1,19 @@
+﻿@model IEnumerable<FrenetCalculate.Models.FreightRequestModel>
+
+@{
+    ViewData["Title"] = "Index";
+}
+
+<h1>Index</h1>
+
+<p>
+    <a asp-action="Create">Create New</a>
+</p>
+<form method="post" action="/Freight/CalculateFreight">
+    <label for="shippingServiceCode">Delivery Service Code:</label>
+    <input type="text" id="shippingServiceCode" name="ShippingServiceCode" required />
+
+    <!-- Adicione os campos restantes para os parâmetros de entrada -->
+
+    <button type="submit">Calcular Frete</button>
+</form>

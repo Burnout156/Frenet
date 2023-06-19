@@ -1,0 +1,43 @@
+﻿@page
+@model FrenetCalculate.Models.CalculateFreightViewModel
+
+<h2>Calculate Freight</h2>
+
+@using (Html.BeginForm("CalculateFreight", "Frenet", FormMethod.Post))
+{
+    <div>
+        @Html.LabelFor(model => model.OriginZipCode)
+        @Html.TextBoxFor(model => model.OriginZipCode)
+        @Html.ValidationMessageFor(model => model.OriginZipCode)
+    </div>
+    <div>
+        @Html.LabelFor(model => model.DestinationZipCode)
+        @Html.TextBoxFor(model => model.DestinationZipCode)
+        @Html.ValidationMessageFor(model => model.DestinationZipCode)
+    </div>
+    <div>
+        <input type="submit" value="Calculate" />
+    </div>
+}
+
+@if (Model.FreightQuotes != null && Model.FreightQuotes.Any())
+{
+    <h3>Freight Quotes</h3>
+    <table>
+        <tr>
+            <th>Origin Zip Code</th>
+            <th>Destination Zip Code</th>
+            <th>Freight Price</th>
+            <th>Quote Date</th>
+        </tr>
+        @foreach (var quote in Model.FreightQuotes)
+        {
+            <tr>
+                <td>@quote.OriginZipCode</td>
+                <td>@quote.DestinationZipCode</td>
+                <td>@quote.FreightPrice</td>
+                <td>@quote.QuoteDate</td>
+            </tr>
+        }
+    </table>
+}
