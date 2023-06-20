@@ -1,0 +1,32 @@
+﻿@model List<FrenetCalculate.Models.FreightQuote>
+
+<h1>Previous Quotations</h1>
+
+@if (Model != null && Model.Any())
+{
+    <table>
+        <thead>
+            <tr>
+                <th>Origin Zip Code</th>
+                <th>Destination Zip Code</th>
+                <th>Freight Price</th>
+                <th>Quote Date</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var quote in Model)
+            {
+                <tr>
+                    <td>@quote.OriginZipCode</td>
+                    <td>@quote.DestinationZipCode</td>
+                    <td>@quote.FreightPrice</td>
+                    <td>@quote.QuoteDate</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+else
+{
+    <p>No previous quotations found for the specified origin ZIP code.</p>
+}

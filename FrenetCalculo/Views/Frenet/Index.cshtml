@@ -1,19 +1,48 @@
-﻿@model IEnumerable<FrenetCalculate.Models.FreightRequestModel>
+﻿@model FrenetCalculate.Models.CalculateFreightViewModel
 
-@{
-    ViewData["Title"] = "Index";
+<h1>Calculate Freight</h1>
+
+<form method="post" action="CalculateFreight">
+    <div>
+        <label for="OriginZipCode">Origin Zip Code:</label>
+        <input type="text" id="OriginZipCode" name="OriginZipCode" value="@(Model != null ? Model.OriginZipCode : string.Empty)" required />
+    </div>
+    <div>
+        <label for="DestinationZipCode">Destination Zip Code:</label>
+        <input type="text" id="DestinationZipCode" name="DestinationZipCode" value="@(Model != null ? Model.DestinationZipCode : string.Empty)" required />
+    </div>
+    <div>
+        <label for="ServiceDescription">Service Description:</label>
+        <input type="text" id="ServiceDescription" name="ServiceDescription" value="@(Model != null ? Model.ServiceDescription : string.Empty)" />
+    </div>
+    <div>
+        <label for="TrackingNumber">Tracking Number:</label>
+        <input type="text" id="TrackingNumber" name="TrackingNumber" value="@(Model != null ? Model.TrackingNumber : string.Empty)" />
+    </div>
+    <button type="submit">Calculate</button>
+</form>
+
+@if (Model != null && Model.ServiceDescription != null && Model.TrackingNumber != null)
+{
+    <h2>Freight Details:</h2>
+    <p><strong>Service Description:</strong> @Model.ServiceDescription</p>
+    <p><strong>Tracking Number:</strong> @Model.TrackingNumber</p>
+
+    @if (Model.TrackingEvents != null && Model.TrackingEvents.Any())
+    {
+        <h3>Tracking Events:</h3>
+        <ul>
+            @foreach (var trackingEvent in Model.TrackingEvents)
+            {
+                <li>@trackingEvent.EventDescription - @trackingEvent.EventDateTime</li>
+            }
+        </ul>
+    }
 }
 
-<h1>Index</h1>
-
-<p>
-    <a asp-action="Create">Create New</a>
-</p>
-<form method="post" action="/Freight/CalculateFreight">
-    <label for="shippingServiceCode">Delivery Service Code:</label>
-    <input type="text" id="shippingServiceCode" name="ShippingServiceCode" required />
-
-    <!-- Adicione os campos restantes para os parâmetros de entrada -->
-
-    <button type="submit">Calcular Frete</button>
-</form>
+@if (!string.IsNullOrEmpty(ViewBag.ErrorMessage))
+{
+    <div class="error-message">
+        @ViewBag.ErrorMessage
+    </div>
+}

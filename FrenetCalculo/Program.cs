@@ -1,18 +1,21 @@
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Hosting;
-using FrenetCalculate.Controllers; // Importe o namespace onde a classe FrenetController está localizada
+using FrenetCalculate.Controllers;
 using FrenetCalculate.Data;
+using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddControllersWithViews();
 
-// Adicione o serviço IHttpClientFactory
+// Add the IHttpClientFactory service.
 builder.Services.AddHttpClient();
 
-builder.Services.AddDbContext<FreightQuoteDbContext>();
+// Configure the DbContext with the appropriate connection string.
+builder.Services.AddDbContext<FreightQuoteDbContext>(options =>
+    options.UseSqlServer(builder.Configuration.GetConnectionString("FreightQuoteDbConnection")));
 
 var app = builder.Build();
 

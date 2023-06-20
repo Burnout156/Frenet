@@ -7,16 +7,32 @@ namespace FrenetCalculate.Data
     public class FreightQuoteDbContext : DbContext
     {
         public DbSet<FreightQuote> FreightQuotes { get; set; }
+        public DbSet<TrackingEvent> TrackingEvents { get; set; }
 
-        protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+        public FreightQuoteDbContext(DbContextOptions<FreightQuoteDbContext> options) : base(options)
         {
+        }
 
-            string conn = "Server=localhost,1433;Database=FrenetDB;User ID=sa;Password=example_123;TrustServerCertificate=True";
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            base.OnModelCreating(modelBuilder);
 
-            if (!optionsBuilder.IsConfigured)
+            // Mapeamento da tabela TrackingEvent
+            modelBuilder.Entity<TrackingEvent>(entity =>
             {
-                optionsBuilder.UseSqlServer(conn);
-            }
+                entity.ToTable("TrackingEvent");
+                entity.HasKey(e => e.Id);
+                // Mapeie as propriedades da classe TrackingEvent para as colunas correspondentes na tabela
+                entity.Property(e => e.Id).HasColumnName("Id").IsRequired();
+                entity.Property(e => e.EventDateTime).HasColumnName("EventDateTime").IsRequired();
+                entity.Property(e => e.EventDescription).HasColumnName("EventDescription").IsRequired();
+                entity.Property(e => e.EventLocation).HasColumnName("EventLocation").IsRequired();
+                entity.Property(e => e.EventType).HasColumnName("EventType").IsRequired();
+                entity.HasOne(e => e.FreightQuote)
+                    .WithMany(fq => fq.TrackingEvents)
+                    .HasForeignKey(e => e.FreightQuoteId)
+                    .OnDelete(DeleteBehavior.Cascade);
+            });
         }
     }
 }

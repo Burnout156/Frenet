@@ -1,43 +1,41 @@
-﻿@page
-@model FrenetCalculate.Models.CalculateFreightViewModel
+﻿@model FrenetCalculate.Models.CalculateFreightViewModel
 
-<h2>Calculate Freight</h2>
+<h1>Calculate Freight</h1>
 
-@using (Html.BeginForm("CalculateFreight", "Frenet", FormMethod.Post))
-{
+<form method="post" asp-action="CalculateFreight">
     <div>
-        @Html.LabelFor(model => model.OriginZipCode)
-        @Html.TextBoxFor(model => model.OriginZipCode)
-        @Html.ValidationMessageFor(model => model.OriginZipCode)
+        <label for="OriginZipCode">Origin Zip Code:</label>
+        <input type="text" id="OriginZipCode" name="OriginZipCode" value="@Model.OriginZipCode" required />
     </div>
     <div>
-        @Html.LabelFor(model => model.DestinationZipCode)
-        @Html.TextBoxFor(model => model.DestinationZipCode)
-        @Html.ValidationMessageFor(model => model.DestinationZipCode)
+        <label for="DestinationZipCode">Destination Zip Code:</label>
+        <input type="text" id="DestinationZipCode" name="DestinationZipCode" value="@Model.DestinationZipCode" required />
     </div>
-    <div>
-        <input type="submit" value="Calculate" />
-    </div>
-}
+    <button type="submit">Calculate</button>
+</form>
 
 @if (Model.FreightQuotes != null && Model.FreightQuotes.Any())
 {
-    <h3>Freight Quotes</h3>
+    <h2>Freight Quotes:</h2>
     <table>
-        <tr>
-            <th>Origin Zip Code</th>
-            <th>Destination Zip Code</th>
-            <th>Freight Price</th>
-            <th>Quote Date</th>
-        </tr>
-        @foreach (var quote in Model.FreightQuotes)
-        {
+        <thead>
             <tr>
-                <td>@quote.OriginZipCode</td>
-                <td>@quote.DestinationZipCode</td>
-                <td>@quote.FreightPrice</td>
-                <td>@quote.QuoteDate</td>
+                <th>Origin Zip Code</th>
+                <th>Destination Zip Code</th>
+                <th>Freight Price</th>
+                <th>Quote Date</th>
             </tr>
-        }
+        </thead>
+        <tbody>
+            @foreach (var quote in Model.FreightQuotes)
+            {
+                <tr>
+                    <td>@quote.OriginZipCode</td>
+                    <td>@quote.DestinationZipCode</td>
+                    <td>@quote.FreightPrice</td>
+                    <td>@quote.QuoteDate</td>
+                </tr>
+            }
+        </tbody>
     </table>
 }

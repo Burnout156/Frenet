@@ -7,5 +7,7 @@
         public string DestinationZipCode { get; set; }
         public decimal FreightPrice { get; set; }
         public DateTime QuoteDate { get; set; }
+
+        public List<TrackingEvent> TrackingEvents { get; set; }
     }
 }

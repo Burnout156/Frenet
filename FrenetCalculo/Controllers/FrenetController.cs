@@ -1,93 +1,146 @@
 ﻿using FrenetCalculate.Data;
 using FrenetCalculate.Models;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Data.SqlClient;
 using Newtonsoft.Json;
+using System.Data;
+using System.Text;
 
 namespace FrenetCalculate.Controllers
 {
     public class FrenetController : Controller
     {
         private readonly FreightQuoteDbContext _dbContext;
+        private readonly IHttpClientFactory _httpClientFactory;
 
-        /*public FrenetController(FreightQuoteDbContext dbContext)
+        public FrenetController(FreightQuoteDbContext dbContext, IHttpClientFactory httpClientFactory)
         {
             _dbContext = dbContext;
-        }*/
+            _httpClientFactory = httpClientFactory;
+        }
 
         public IActionResult Index()
         {
             return View();
         }
 
-        private readonly IHttpClientFactory _httpClientFactory;
-
-        public FrenetController(IHttpClientFactory httpClientFactory)
+        [HttpPost("CalculateFreight")]
+        public async Task<IActionResult> CalculateFreight(string originZipCode, string destinationZipCode, string serviceDescription, string trackingNumber)
         {
-            _httpClientFactory = httpClientFactory;
-        }
+            // Monta a URL para o cálculo do frete
+            string baseUrl = "http://private-bf6aac-frenetapi.apiary-mock.com";
+            string calculateUrl = "/shipping/quote";
+            string url = $"{baseUrl}{calculateUrl}";
 
-        [HttpPost]
-        public async Task<IActionResult> CalculateFreight([FromBody] FreightRequestModel requestModel)
-        {
+            // Define a chave, senha e token de autenticação
+            string apiKey = "brunoferreira378@gmail.com";
+            string apiPassword = "yy4bc/E2nggwOabOGNbfZg==";
+            string apiToken = "6F81D4AER9792R4C75RB4B5R325FA75B9554";
 
-            if (!ModelState.IsValid)
+            // Monta o objeto com os parâmetros para o cálculo do frete
+            var requestData = new
             {
-                return BadRequest(ModelState);
-            }
+                OriginZipCode = originZipCode,
+                DestinationZipCode = destinationZipCode,
+                serviceDescription = serviceDescription,
+                trackingNumber = trackingNumber,
+                ApiKey = apiKey,
+                ApiPassword = apiPassword,
+                ApiToken = apiToken
+            };
+
+            // Converte o objeto para JSON
+            string requestDataJson = JsonConvert.SerializeObject(requestData);
+
+            // Cria o HttpClient
+            HttpClient client = new HttpClient();
 
             try
             {
-                var httpClient = _httpClientFactory.CreateClient();
-                var apiKey = "brunoferreira378@gmail.com"; // Insira aqui a chave de acesso da API Frenet
+                // Envia a requisição POST para a API
+                HttpResponseMessage response = await client.PostAsync(url, new StringContent(requestDataJson, Encoding.UTF8, "application/json"));
 
-                // Construa a URL de chamada à API Frenet com base nos parâmetros fornecidos
-                var apiUrl = $"https://private-bf6aac-frenetapi.apiary-mock.com/shipping/quote/{requestModel.ShippingServiceCode}/{requestModel.DestinationZipCode}/{requestModel.PackageWeight}/{requestModel.PackageLength}/{requestModel.PackageHeight}/{requestModel.PackageWidth}?apiKey={apiKey}";
-
-                // Faça a chamada à API Frenet
-                var response = await httpClient.GetAsync(apiUrl);
-
-                // Verifique se a chamada foi bem-sucedida
+                // Verifica se a requisição foi bem-sucedida
                 if (response.IsSuccessStatusCode)
                 {
-                    // Leia a resposta JSON retornada pela API
-                    var responseContent = await response.Content.ReadAsStringAsync();
+                    // Lê a resposta como uma string
+                    string responseContent = await response.Content.ReadAsStringAsync();
+
+                    // Converte a resposta para um objeto
                     var freightResponse = JsonConvert.DeserializeObject<FreightResponseModel>(responseContent);
 
-                    // Faça o processamento dos dados e retorne o resultado
-                    // Aqui você pode salvar os dados utilizados e os resultados no banco de dados usando as stored procedures
+                    // Verifica se o cálculo do frete foi bem-sucedido
+                    if (freightResponse != null)
+                    {
+                        // Mapeia os resultados do frete para a ViewModel
+                        var viewModel = new CalculateFreightViewModel
+                        {
+                            OriginZipCode = originZipCode,
+                            DestinationZipCode = destinationZipCode,
+                            ServiceDescription = freightResponse.ServiceDescription,
+                            TrackingNumber = freightResponse.TrackingNumber,
+                            TrackingEvents = freightResponse.TrackingEvents
+                        };
 
-                    return Ok(freightResponse);
+                        // Retorna a View com os resultados do frete
+                        return RedirectToAction(nameof(CalculateFreight));
+                    }
+                    else
+                    {
+                        // Exibe uma mensagem de erro caso o cálculo do frete tenha falhado
+                        ViewBag.ErrorMessage = "Failed to calculate freight.";
+                    }
                 }
                 else
                 {
-                    // A chamada à API Frenet retornou um erro, lide com isso adequadamente
-                    return StatusCode((int)response.StatusCode, "Erro ao calcular o frete.");
+                    // Exibe uma mensagem de erro caso a requisição não tenha sido bem-sucedida
+                    ViewBag.ErrorMessage = "Failed to make API request.";
                 }
             }
             catch (Exception ex)
             {
-                // Trate as exceções e retorne uma resposta apropriada
-                return StatusCode(500, "Ocorreu um erro ao calcular o frete.");
+                // Exibe uma mensagem de erro caso ocorra uma exceção durante a requisição
+                ViewBag.ErrorMessage = "An error occurred: " + ex.Message;
             }
+
+            // Retorna a View com uma mensagem de erro
+            return View("Index", new CalculateFreightViewModel
+            {
+                OriginZipCode = originZipCode,
+                DestinationZipCode = destinationZipCode
+            });
         }
 
-        public IActionResult CalculateFreight()
-        {
-            var model = new CalculateFreightViewModel();
-            return View(model);
-        }
-
-        public IActionResult ConsultPreviousQuotations(string OriginZipCode)
+        public IActionResult ConsultPreviousQuotations(string originZipCode)
         {
             // Consultar no banco de dados as cotações realizadas anteriormente com o CEP de origem especificado
-            List<FreightQuote> cotacoesAnteriores = _dbContext.FreightQuotes
-                .Where(c => c.OriginZipCode == OriginZipCode)
+            List<FreightQuote> previousQuotes = _dbContext.FreightQuotes
+                .Where(c => c.OriginZipCode == originZipCode)
                 .OrderByDescending(c => c.QuoteDate)
                 .Take(10)
                 .ToList();
 
             // Retornar as cotações encontradas
-            return View(cotacoesAnteriores);
+            return View(previousQuotes);
+        }
+
+        public IActionResult CalculateFreight()
+        {
+            // Recupera os dados preenchidos da TempData, se existirem
+            var viewModelJson = TempData["CalculateFreightViewModel"] as string;
+            if (!string.IsNullOrEmpty(viewModelJson))
+            {
+                // Converte o JSON para a ViewModel
+                var viewModel = JsonConvert.DeserializeObject<CalculateFreightViewModel>(viewModelJson);
+
+                // Limpa a TempData
+                TempData.Clear();
+
+                // Retorna a View com os dados preenchidos
+                return View("Index", viewModel);
+            }
+
+            return RedirectToAction(nameof(Index));
         }
     }
 }
